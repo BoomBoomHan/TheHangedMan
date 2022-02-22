@@ -33,15 +33,15 @@ namespace TheHangedManHelper
 		/// <returns>"Launcher"文件名称</returns>
 		public static string ExeName() => "Launcher";
 
-		public static string GetOfficialName(string gameName)
-		{
-			Dictionary<string, string> gamesMap = new Dictionary<string, string>()
-			{
-				{"Client", "英雄联盟"},
-				{"Phasmophobia", "恐鬼症"},
-			};
-			return gamesMap.ContainsKey(gameName) ? gamesMap[gameName] : gameName;
-		}
+		/// <summary>
+		/// 空路径字符串
+		/// </summary>
+		/// <returns>"None"</returns>
+		public static string NullPath() => "None";
+
+		public static string ScanIgnoreName() => "SCANIGNORE";
+
+		
 	}
 
 	/// <summary>
@@ -92,16 +92,12 @@ namespace TheHangedManHelper
 		/// <returns>文件路径</returns>
 		public static string SelectFile(string filter = "")
 		{
-			string path = "";
+			string path = THMBaseData.NullPath();
 			OpenFileDialog fileSelector = new OpenFileDialog();
 			fileSelector.Filter = (filter != "") ? string.Format($"{filter}文件(*.{filter})|*.{filter}") : "";
 			if (fileSelector.ShowDialog() == DialogResult.OK)
 			{
 				path = fileSelector.FileName;
-			}
-			else if (fileSelector.ShowDialog() == DialogResult.Cancel)
-			{
-				path = "";
 			}
 			return path;
 		}
@@ -121,6 +117,14 @@ namespace TheHangedManHelper
 			return path;
 		}
 
+		/// <summary>
+		/// 以一个结构体或类为模板创建一个json文件
+		/// </summary>
+		/// <typeparam name="T">结构体或类类型</typeparam>
+		/// <param name="path">json路径</param>
+		/// <param name="jsonName">json文件名</param>
+		/// <param name="dataObject">模板类型对象引用</param>
+		/// <returns>json的完整路径</returns>
 		public static string CreateJson<T>(string path, string jsonName, ref T dataObject)
 		{
 			string json = JsonConvert.SerializeObject(dataObject, Formatting.Indented);
@@ -129,6 +133,11 @@ namespace TheHangedManHelper
 			file.Close();
 			File.WriteAllText(fullPath, json);
 			return fullPath;
+		}
+
+		public static bool IsValidExePath(string path)
+		{
+			return File.Exists(path) && path.Substring(path.Length - 3) == "exe";
 		}
 	}
 
@@ -181,6 +190,48 @@ namespace TheHangedManHelper
 				name += index.ToString();
 			}
 			textBox.Text = name;
+		}
+		static List<GameKeywordConfig> configs;
+		static THMAdvancedHelper()
+		{
+			configs = new List<GameKeywordConfig>()
+			{
+				{new GameKeywordConfig("英雄联盟", new[]{"Client", "LeagueClient"}, "英雄联盟", "LOL", "League of Legends") },
+				{new GameKeywordConfig("WeGame", new[]{"wegame"}, "WeGame", "TGP") },
+				{new GameKeywordConfig("CSGO", new[]{"csgo"}, "Counter-Strike Global Offensive", "CSGO", "CS:GO") },
+				{new GameKeywordConfig("永劫无间", new[]{"NarakaBladepoint"}, "NARAKA BLADEPOINT") },
+				{new GameKeywordConfig("原神", new[]{"launcher", "YuanShen"}, "Genshin Impact", "Genshin Impact Game") },
+				{new GameKeywordConfig("绝地求生", new[]{"ExecPubg", "TslGame", "TslGame_BE", "TslGame_UC", "TslGame_ZK"}, "PUBG") },
+				{new GameKeywordConfig("侠盗猎车手5", new[]{"GTA5", "PlayGTAV", "GTAVLauncher", "GTAVLanguageSelect"}, "Grand Theft Auto V", "GTAV") },
+				{new GameKeywordConfig("怪物猎人：世界", new[]{"MonsterHunterWorld"}, "Monster Hunter World") },
+				{new GameKeywordConfig("极限竞速：地平线4", new[]{"ForzaHorizon4"}) },
+				{new GameKeywordConfig("消逝的光芒2", new[]{"DyingLightGame_x64_rwdi"}, "Dying Light2") },
+				{new GameKeywordConfig("APEX英雄", new[]{"r5apex"}, "Apex Legends") },
+				{new GameKeywordConfig("糖豆人：终极淘汰赛", new[]{"FallGuys_client_game", "FallGuysGameLauncher"}, "Fall Guys") },
+				{new GameKeywordConfig("饥荒联机版", new[]{"dontstarve_steam"}, "Don't Starve Together") },
+				{new GameKeywordConfig("恐鬼症", new[]{"Phasmophobia"}) },
+				{new GameKeywordConfig("饥荒", new[]{"dontstarve_steam"}, "dont_starve") },
+				{new GameKeywordConfig("雀魂麻将", new[]{"Jantama_MahjongSoul"}, "MahjongSoul") },
+				{new GameKeywordConfig("盖瑞模组", new[]{"hl2"}, "GarrysMod") },
+				{new GameKeywordConfig("城市天际线", new[]{ "Cities_Skylines" }) },
+				{new GameKeywordConfig("喵斯快跑", new[]{"MuseDash"}, "Muse Dash") },
+				{new GameKeywordConfig("严阵以待", new[]{"ReadyOrNot"}, "Ready Or Not") },
+				{new GameKeywordConfig("人渣", new[]{"SCUM_Launcher"}, "SCUM") },
+				{new GameKeywordConfig("星露谷物语", new[]{"Stardew Valley"}) },
+				{new GameKeywordConfig("泰特瑞拉", new[]{"Terraria"}) },
+			};
+		}
+
+		public static string GetOfficialName(ref GameData gameData)
+		{
+			foreach (GameKeywordConfig config in configs)
+			{
+				if (config.IsA(ref gameData))
+				{
+					return config.GameName;
+				}
+			}
+			return gameData.ExeName;
 		}
 	}
 }

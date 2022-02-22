@@ -20,6 +20,8 @@ public class Client
 		string[] directs = Directory.GetDirectories(THMBaseData.BasePath());
 		foreach (string direct in directs)
 		{
+			if (direct.IndexOf(THMBaseData.ScanIgnoreName()) > -1) continue;
+
 			StreamReader reader = File.OpenText(string.Format($@"{direct}\{THMBaseData.ConfigJsonName()}.json"));
 			string json = reader.ReadToEnd();
 			
@@ -36,6 +38,7 @@ public class Client
 		string detailedPath = THMProcessHelper.DetailedPath(gameData.GameName);
 		THMAdvancedHelper.CreateGameSave(gameData.GameName, gameData.OriginPath);
 		games.Add(gameData);
+		mainForm.AddGameInListView(gameData);
 
 		//GameData replace = new GameData();
 		//GameFileCopyHandle replaceHandle = new GameFileCopyHandle(gameData.GameName, THMProcessHelper.DetailedPath(gam))

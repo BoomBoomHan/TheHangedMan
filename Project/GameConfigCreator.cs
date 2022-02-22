@@ -12,7 +12,7 @@ public sealed class GameConfigCreator
 
 	public GameConfigCreator(GameData gd)
 	{
-		gameData = gd;
+		gameData = new GameData(ref gd);
 	}
 
 	public void CreateConfig(string targetPath)

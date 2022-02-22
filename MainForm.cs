@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -13,6 +15,8 @@ using TheHangedManHelper;
 public partial class MainForm : Form
 {
 	Client client;
+
+	float buttonFontSize;
 
 	public MainForm()
 	{
@@ -29,14 +33,23 @@ public partial class MainForm : Form
 		label2.Text = txt;
 	}
 
+	public void AddGameInListView(GameData gameData)
+	{
+		ListViewItem item = new ListViewItem((1 + GamesListView.Items.Count).ToString());
+		item.SubItems.Add(gameData.GameName);
+		item.SubItems.Add(gameData.OriginPath);
+		GamesListView.Items.Add(item);
+	}
+
 	private void MainFormLoad(object sender, EventArgs e)
 	{
-		client = new Client(this);
+		buttonFontSize = AddGameButton.Font.Size;
 		string directPath = THMBaseData.BasePath();
 		DirectoryInfo info = null;
 		if (!Directory.Exists(directPath))
 		{
 			info = Directory.CreateDirectory(directPath);
+
 			//label1.Text = "首次打开此程序，创建目录。";
 		}
 		else
@@ -46,11 +59,14 @@ public partial class MainForm : Form
 		}
 		info.Attributes = FileAttributes.Hidden;
 
-		foreach (GameData gamedata in client.Games)
-		{
-			label2.Text += Newtonsoft.Json.JsonConvert.SerializeObject(gamedata, Newtonsoft.Json.Formatting.Indented);
-		}
+		AddGameButton.Enabled = false;
 
+		client = new Client(this);
+		foreach (GameData gameData in client.Games)
+		{
+			AddGameInListView(gameData);
+		}
+		//SetLabelText(client.Games.Count.ToString());
 	}
 
 	private void SelectGame_Click(object sender, EventArgs e)
@@ -60,24 +76,7 @@ public partial class MainForm : Form
 
 	private void OnTestClick(object sender, EventArgs e)
 	{
-		/*FileCopyHandle handle = new FileCopyHandle(@"F:\out.exe");
-		label1.Text = handle.IsValid().ToString();
-		handle.Close();
-		//string path = THMProcessHelper.SelectFile("exe");
-		string path = THMProcessHelper.SelectPath();
-		label1.Text = path;*/
-		/*string gameName = "LOL";
-		string path = @"F:\out.exe";
-		THMAdvancedHelper.CreateGameSave(gameName, path);
-		GameFileCopyHandle gameFileCopyHandle = new GameFileCopyHandle(path);
-		gameFileCopyHandle.CopyTo(THMProcessHelper.DetailedPath(gameName), THMBaseData.ExeName());
-		label1.Text = File.Exists(String.Format($@"{THMProcessHelper.DetailedPath(gameName)}\Launcher.exe")).ToString();*/
-		/*GameData gameData = new GameData(gameName, path);
-		THMAdvancedHelper.CreateGameSave(gameName, path);*/
-		//label1.Text = THMProcessHelper.CreateJson<GameData>(THM, "out", ref gameData);
-		//label1.Text = client.Games[0];
-		//THMAdvancedHelper.RefreshTextBox(ref client, ref textBox1);
-		bool success = (Path.Text != "");
+		bool success = (Path.Text != THMBaseData.NullPath());
 		GameData gameData = new GameData();
 		if (success)
 		{
@@ -101,6 +100,8 @@ public partial class MainForm : Form
 		{
 			SetLabelText("添加失败。");
 		}
+
+
 	}
 
 	private void label2_Click(object sender, EventArgs e)
@@ -110,9 +111,33 @@ public partial class MainForm : Form
 
 	private void Path_TextChanged(object sender, EventArgs e)
 	{
-		GameData data = new GameData(Path.Text);
-		GameName.Text = THMBaseData.GetOfficialName(data.GameName);
+		string path = Path.Text;
+		if (path == THMBaseData.NullPath())
+		{
+			return;
+		}
+		GameData data = new GameData(path);
+		GameName.Text = THMAdvancedHelper.GetOfficialName(ref data);
+
+		if (THMProcessHelper.IsValidExePath(path))
+		{
+			AddGameButton.Enabled = true;
+		}
 	}
 
-	
+	private void GamesListView_SelectedIndexChanged(object sender, EventArgs e)
+	{
+		int index = int.Parse(GamesListView.FocusedItem.Text) - 1;
+		RecoverButton.Enabled = true;
+		RecoverButton.Font = new Font(RecoverButton.Font.Name, buttonFontSize / 2);
+		RecoverButton.Text = string.Format($"恢复\n{client.Games[index].GameName}");
+		
+	}
+
+	private void RecoverButton_Click(object sender, EventArgs e)
+	{
+		Process.Start("https://www.bilibili.com/video/BV1GJ411x7h7?share_source=copy_web");
+		Thread.Sleep(1000);
+		SetLabelText("你觉得我会那么好心让你恢复吗？？？？");
+	}
 }
